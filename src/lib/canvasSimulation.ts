@@ -8,14 +8,17 @@ export type CanvasConfig = {
 };
 
 export default class CanvasSimulation {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private config: CanvasConfig;
+  id: string;
 
-  private timer = new Timer();
-  private bodies: Body[] = [];
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  config: CanvasConfig;
+
+  timer = new Timer();
+  bodies: Body[] = [];
 
   constructor(canvas: HTMLCanvasElement, config: CanvasConfig) {
+    this.id = crypto.randomUUID();
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.config = config;
@@ -34,6 +37,10 @@ export default class CanvasSimulation {
     body.simulation = this;
   }
 
+  removeBody(body: Body) {
+    this.bodies = this.bodies.filter((b) => b !== body);
+  }
+
   setSpeed(speed: number) {
     this.config.speed = speed;
   }
@@ -44,10 +51,6 @@ export default class CanvasSimulation {
 
   resetTimer() {
     this.timer.reset();
-  }
-
-  getCtx() {
-    return this.ctx;
   }
 
   get width() {
@@ -105,22 +108,7 @@ export default class CanvasSimulation {
   }
 
   private render() {
-    const { tailingFade } = this.config;
-
-    if (tailingFade) {
-      // Trail fade
-      this.ctx.beginPath();
-      this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
-      this.ctx.fillStyle = `rgba(0, 0, 0, ${
-        this.timer.fps ? 2 / this.timer.fps : 0.1
-      })`;
-      this.ctx.fill();
-      this.ctx.closePath();
-    } else {
-      // Clear
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.bodies.forEach((body) => body.render());
   }
 }
