@@ -1,0 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: hsl(0 0 90);
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+
+#canvas {
+  width: 100vw;
+  height: 100vh;
+  background: hsl(0 0 4);
+}
+
+#board {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 50;
+}
