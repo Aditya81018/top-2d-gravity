@@ -5,6 +5,7 @@ import Timer from "./timer";
 export type CanvasConfig = {
   tailingFade: boolean;
   speed: number;
+  absorb: boolean;
 };
 
 export default class CanvasSimulation {
@@ -17,6 +18,9 @@ export default class CanvasSimulation {
   timer = new Timer();
   bodies: Body[] = [];
 
+  // 💥 NEW: Set to store the IDs of bodies marked for removal after an absorption
+  private bodiesToRemove: Set<string> = new Set();
+
   constructor(canvas: HTMLCanvasElement, config: CanvasConfig) {
     this.id = crypto.randomUUID();
     this.canvas = canvas;
@@ -28,17 +32,28 @@ export default class CanvasSimulation {
   }
 
   // Public API
+
+  /**
+   * 💥 NEW: Adds a body's ID to a set for deferred removal.
+   * This is called by Body.absorbBody() to safely remove bodies
+   * after the current update loop iteration is complete.
+   */
+  markForRemoval(id: string) {
+    this.bodiesToRemove.add(id);
+  }
+
   start() {
     requestAnimationFrame(this.animate);
   }
-
+  // ... (other public methods like addBody, removeBody, etc. remain the same)
   addBody(body: Body) {
     this.bodies.push(body);
     body.simulation = this;
   }
 
   removeBody(body: Body) {
-    this.bodies = this.bodies.filter((b) => b !== body);
+    const idx = this.bodies.indexOf(body);
+    if (idx !== -1) this.bodies.splice(idx, 1);
   }
 
   setSpeed(speed: number) {
@@ -99,7 +114,22 @@ export default class CanvasSimulation {
   };
 
   private update() {
-    this.bodies.forEach((body) => body.update());
+    // Use a snapshot to iterate over, in case the array is modified (though it won't be in this loop)
+    const snapshot = [...this.bodies];
+
+    // 1. Run update on all bodies (this is where collision/absorption happens)
+    for (const body of snapshot) {
+      // Body will call this.markForRemoval(id) if it is absorbed
+      body.update();
+    }
+
+    // 2. 💥 NEW: Remove bodies marked for absorption
+    if (this.bodiesToRemove.size > 0) {
+      this.bodies = this.bodies.filter(
+        (body) => !this.bodiesToRemove.has(body.id)
+      );
+      this.bodiesToRemove.clear(); // Clear the set for the next frame
+    }
 
     // If you have a timeBoard, you can log here:
     document.getElementById("time")!.innerText = `${(

@@ -6,11 +6,12 @@ import "./style.css";
 
 const config: CanvasConfig = {
   tailingFade: true,
-  speed: 0.25,
+  speed: 10_000 * 2,
+  absorb: false,
 };
 
-const addHookBody = true;
-const count = 200;
+const addHookBody = false;
+const count = 3;
 
 // DOM elements
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -19,11 +20,12 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const simulation = new CanvasSimulation(canvas, config);
 
 if (addHookBody) {
+  const hookBodyRadius = 10;
   const hookBody = new Body(
     canvas.width / 2,
     canvas.height / 2,
-    25,
-    1_000_000,
+    hookBodyRadius,
+    Math.pow(hookBodyRadius, 3) * 10_000,
     randomColor()
   );
   hookBody.update = () => {};
@@ -31,10 +33,17 @@ if (addHookBody) {
 }
 
 for (let i = 0; i < count; i++) {
-  const size = randomNo(0.1, 4, 3);
+  // 1. Determine the radius (size)
+  const size = randomNo(32, 32, 3);
   const radius = size;
-  const mass = size * 10_000;
+
+  // 2. 💥 CORRECT MASS CALCULATION: m is proportional to r cubed.
+  // We use 10,000 as a scaling factor (k) to keep the masses in a reasonable range.
+  // $m = k \cdot r^3$
+  const mass = radius * radius * radius * 10_000;
+
   const body = new Body(
+    // Ensure position is far enough from edges
     randomNo(radius, canvas.width - radius),
     randomNo(radius, canvas.height - radius),
     radius,
