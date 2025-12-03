@@ -22,17 +22,25 @@ export default class Body {
     this.simulation = null;
   }
 
-  update(dtSeconds: number) {
-    this.x += this.linearSpeed * Math.cos(this.direction) * dtSeconds;
-    this.y += this.linearSpeed * Math.sin(this.direction) * dtSeconds;
-    this.direction += this.angularSpeed * dtSeconds;
+  update() {
+    this.x += this.linearSpeed * Math.cos(this.direction) * this.dtSeconds;
+    this.y += this.linearSpeed * Math.sin(this.direction) * this.dtSeconds;
+    this.direction += this.angularSpeed * this.dtSeconds;
   }
 
-  render(ctx: CanvasRenderingContext2D) {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    ctx.closePath();
+  render() {
+    this.ctx.beginPath();
+    this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = this.color;
+    this.ctx.fill();
+    this.ctx.closePath();
+  }
+
+  get ctx() {
+    return this.simulation!.getCtx();
+  }
+
+  get dtSeconds() {
+    return this.simulation!.dtSeconds;
   }
 }

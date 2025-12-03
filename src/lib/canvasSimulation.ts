@@ -42,6 +42,14 @@ export default class CanvasSimulation {
     this.config.tailingFade = enabled;
   }
 
+  resetTimer() {
+    this.timer.reset();
+  }
+
+  getCtx() {
+    return this.ctx;
+  }
+
   get width() {
     return this.canvas.width;
   }
@@ -50,10 +58,29 @@ export default class CanvasSimulation {
     return this.canvas.height;
   }
 
+  get dtSeconds() {
+    return (this.timer.deltaTime / 1000) * this.config.speed;
+  }
+
   // Internal helpers
   private resizeCanvas = () => {
+    // Keep track of old size to adjust body positions
+    const oldWidth = this.canvas.width || window.innerWidth;
+    const oldHeight = this.canvas.height || window.innerHeight;
+
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+
+    const dx = this.canvas.width - oldWidth;
+    const dy = this.canvas.height - oldHeight;
+
+    // Shift all bodies by half the delta so they stay centered visually
+    if (dx !== 0 || dy !== 0) {
+      this.bodies.forEach((body) => {
+        body.x += dx / 2;
+        body.y += dy / 2;
+      });
+    }
   };
 
   private animate: FrameRequestCallback = (timestamp) => {
@@ -69,13 +96,12 @@ export default class CanvasSimulation {
   };
 
   private update() {
-    const dtSeconds = (this.timer.deltaTime / 1000) * this.config.speed;
+    this.bodies.forEach((body) => body.update());
 
-    this.bodies.forEach((body) => body.update(dtSeconds));
-
-    // this.timeBoard.innerText = `${(this.timer.lastTimestamp / 1000).toFixed(
-    // 0
-    // )}s / ${this.timer.fps.toFixed(0)}fps / ${this.config.speed}x`;
+    // If you have a timeBoard, you can log here:
+    document.getElementById("time")!.innerText = `${(
+      this.timer.lastTimestamp / 1000
+    ).toFixed(0)}s / ${this.timer.fps.toFixed(0)}fps / ${this.config.speed}x`;
   }
 
   private render() {
@@ -95,6 +121,6 @@ export default class CanvasSimulation {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    this.bodies.forEach((body) => body.render(this.ctx));
+    this.bodies.forEach((body) => body.render());
   }
 }

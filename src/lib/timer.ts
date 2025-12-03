@@ -1,19 +1,36 @@
+// timer.ts
 export default class Timer {
-  public lastTimestamp = 0;
-  public deltaTime = 0; // ms
-
-  get fps() {
-    return this.deltaTime > 0 ? 1000 / this.deltaTime : 0;
-  }
+  lastTimestamp = 0;
+  deltaTime = 0;
+  fps = 0;
 
   update(timestamp: number): boolean {
     if (!this.lastTimestamp) {
       this.lastTimestamp = timestamp;
-      return false; // Indicates not to continue the main loop
+      this.deltaTime = 0;
+      this.fps = 0;
+      return false; // skip first frame
     }
 
-    this.deltaTime = timestamp - this.lastTimestamp;
+    let dt = timestamp - this.lastTimestamp;
     this.lastTimestamp = timestamp;
-    return true; // Indicates to continue
+
+    // If the tab was minimized or inactive, dt can be huge.
+    // Clamp it so the simulation doesn't "teleport".
+    const MAX_DT = 1000 / 15; // cap to ~15 FPS step
+    if (dt > MAX_DT) {
+      dt = MAX_DT;
+    }
+
+    this.deltaTime = dt;
+    this.fps = dt > 0 ? 1000 / dt : 0;
+
+    return true;
+  }
+
+  reset() {
+    this.lastTimestamp = 0;
+    this.deltaTime = 0;
+    this.fps = 0;
   }
 }
