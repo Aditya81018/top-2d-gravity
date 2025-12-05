@@ -1,55 +1,54 @@
 // main.ts
-import { randomColor, randomNo } from "./helpers";
-import Body from "./lib/body";
 import CanvasSimulation, { type CanvasConfig } from "./lib/canvasSimulation";
+import centerMassSimulation from "./lib/simulations/centerMass";
+import randomSpawnSimulation from "./lib/simulations/randomSpawn";
+import scatterSimulation from "./lib/simulations/scatter";
 import "./style.css";
+
+const SPEED_CONSTANT = 365 * 24 * 60 * 60 * (1 / 1000);
 
 const config: CanvasConfig = {
   tailingFade: true,
-  speed: 10_000 * 2,
-  absorb: false,
+  tailLength: 10,
+  speed: SPEED_CONSTANT,
+  absorb: true,
+  bounded: true,
+  metersPerPixel: 1000,
 };
-
-const addHookBody = false;
-const count = 3;
 
 // DOM elements
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowUp") {
+    config.speed *= 2;
+  } else if (event.key === "ArrowDown") {
+    config.speed /= 2;
+  }
+});
+
 // Create simulation
 const simulation = new CanvasSimulation(canvas, config);
 
-if (addHookBody) {
-  const hookBodyRadius = 10;
-  const hookBody = new Body(
-    canvas.width / 2,
-    canvas.height / 2,
-    hookBodyRadius,
-    Math.pow(hookBodyRadius, 3) * 10_000,
-    randomColor()
-  );
-  hookBody.update = () => {};
-  simulation.addBody(hookBody);
-}
+scatterSimulation(simulation, {
+  count: 50,
+  sizeRange: [4, 8],
+});
+scatterSimulation(simulation, {
+  count: 250,
+  sizeRange: [1, 2],
+});
 
-for (let i = 0; i < count; i++) {
-  // 1. Determine the radius (size)
-  const size = randomNo(32, 32, 3);
-  const radius = size;
+// scatterSimulation(simulation, {
+//   count: 200,
+//   sizeRange: [0.1, 2],
+// });
+randomSpawnSimulation(simulation, {
+  interval: 500,
+  sizeRange: [0.1, 4],
+  count: 2,
+});
 
-  // 2. 💥 CORRECT MASS CALCULATION: m is proportional to r cubed.
-  // We use 10,000 as a scaling factor (k) to keep the masses in a reasonable range.
-  // $m = k \cdot r^3$
-  const mass = radius * radius * radius * 10_000;
-
-  const body = new Body(
-    // Ensure position is far enough from edges
-    randomNo(radius, canvas.width - radius),
-    randomNo(radius, canvas.height - radius),
-    radius,
-    mass
-  );
-  simulation.addBody(body);
-}
+// centerMassSimulation(simulation, { size: 16 });
 
 simulation.start();

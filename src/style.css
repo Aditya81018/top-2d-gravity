@@ -19,7 +19,7 @@ body {
 
 #board {
   position: absolute;
-  top: 0;
-  right: 0;
+  bottom: 1rem;
+  right: 1rem;
   z-index: 50;
 }

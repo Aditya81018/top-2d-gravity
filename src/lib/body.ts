@@ -21,36 +21,37 @@ export default class Body {
   direction: number;
   color: string;
   simulation: CanvasSimulation | null;
+  isFixed: boolean;
 
   // 🔥 trail data
   private trail: TrailPoint[] = [];
-  private readonly maxTrailPoints = 40; // how long the trail is
 
   // New property to prevent multiple collision checks for the same event
   public isAlive: boolean = true;
 
-  constructor(
-    x = 50,
-    y = 50,
-    radius = 25,
-    mass = 1_000_000,
-    color = randomColor()
-  ) {
+  constructor(x = 50, y = 50, size = 25, color = randomColor()) {
     this.id = crypto.randomUUID();
     this.x = x;
     this.y = y;
-    this.radius = radius;
-    this.mass = mass;
+    this.radius = 0;
+    this.mass = 0;
+    this.setSize(size);
     this.linearSpeed = 0;
     this.angularSpeed = 0;
     this.direction = 0;
     this.color = color;
     this.simulation = null;
+    this.isFixed = false;
+  }
+
+  setSize(size: number) {
+    this.radius = size;
+    this.mass = Math.pow(size, 3) * 10_000;
   }
 
   update() {
     // 🛑 Check if the body has been absorbed
-    if (!this.isAlive) {
+    if (!this.isAlive || this.isFixed) {
       return;
     }
 
@@ -59,13 +60,25 @@ export default class Body {
     const canvas = this.simulation!.canvas;
 
     if (
-      this.x < -this.radius ||
-      this.x > canvas.width + this.radius ||
-      this.y < -this.radius ||
-      this.y > canvas.height + this.radius
+      this.x < this.radius ||
+      this.x > canvas.width - this.radius ||
+      this.y < this.radius ||
+      this.y > canvas.height - this.radius
     ) {
-      this.direction = calAngle(this, pickOne(...this.simulation!.bodies));
-      this.linearSpeed /= 2;
+      if (this.simulation!.config.bounded) {
+        // horizontal wall
+        if (this.x < this.radius || this.x > canvas.width - this.radius) {
+          this.direction = Math.PI - this.direction;
+        }
+
+        // vertical wall
+        if (this.y < this.radius || this.y > canvas.height - this.radius) {
+          this.direction = -this.direction;
+        }
+      } else {
+        this.simulation?.markForRemoval(this.id);
+      }
+      // this.linearSpeed /= 2;
     }
 
     if (this.simulation!.config.tailingFade) {
@@ -81,9 +94,7 @@ export default class Body {
       if (!body.isAlive) return; // Skip bodies already marked for removal
 
       const distance = calDistance(this, body);
-      const isColliding =
-        distance <=
-        this.radius + body.radius - Math.min(this.radius, body.radius);
+      const isColliding = distance <= this.radius + body.radius;
 
       // 💥 COLLISION AND ABSORPTION LOGIC START
       if (isColliding) {
@@ -225,5 +236,9 @@ export default class Body {
 
   get dtSeconds() {
     return this.simulation!.dtSeconds;
+  }
+
+  get maxTrailPoints() {
+    return this.simulation?.config.tailLength || 40;
   }
 }

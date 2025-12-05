@@ -4,8 +4,11 @@ import Timer from "./timer";
 
 export type CanvasConfig = {
   tailingFade: boolean;
+  tailLength: number;
   speed: number;
   absorb: boolean;
+  bounded: boolean;
+  metersPerPixel: number;
 };
 
 export default class CanvasSimulation {
@@ -46,9 +49,9 @@ export default class CanvasSimulation {
     requestAnimationFrame(this.animate);
   }
   // ... (other public methods like addBody, removeBody, etc. remain the same)
-  addBody(body: Body) {
-    this.bodies.push(body);
-    body.simulation = this;
+  addBody(...bodies: Body[]) {
+    this.bodies.push(...bodies);
+    bodies.forEach((body) => (body.simulation = this));
   }
 
   removeBody(body: Body) {
@@ -132,9 +135,16 @@ export default class CanvasSimulation {
     }
 
     // If you have a timeBoard, you can log here:
-    document.getElementById("time")!.innerText = `${(
-      this.timer.lastTimestamp / 1000
-    ).toFixed(0)}s / ${this.timer.fps.toFixed(0)}fps / ${this.config.speed}x`;
+    document.getElementById("time")!.innerText = `${
+      this.bodies.length
+    } bodies / ${(this.timer.lastTimestamp / 1000).toFixed(0)} sec / ${(
+      ((this.timer.lastTimestamp / 1000) * this.config.speed) /
+      60 /
+      60 /
+      24
+    ).toFixed(0)} days / ${this.timer.fps.toFixed(0)} fps / ${
+      this.config.speed
+    }x`;
   }
 
   private render() {
