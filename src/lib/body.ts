@@ -3,7 +3,6 @@ import {
   calAttraction,
   calDistance,
   modifyColor,
-  pickOne,
   randomColor,
 } from "../helpers";
 import type CanvasSimulation from "./canvasSimulation";

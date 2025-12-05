@@ -1,6 +1,6 @@
 // main.ts
 import CanvasSimulation, { type CanvasConfig } from "./lib/canvasSimulation";
-import centerMassSimulation from "./lib/simulations/centerMass";
+// import centerMassSimulation from "./lib/simulations/centerMass";
 import randomSpawnSimulation from "./lib/simulations/randomSpawn";
 import scatterSimulation from "./lib/simulations/scatter";
 import "./style.css";

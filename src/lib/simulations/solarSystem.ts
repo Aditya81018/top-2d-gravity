@@ -1,6 +1,5 @@
 import Body from "../body";
 import type CanvasSimulation from "../canvasSimulation";
-import scatterSimulation from "./scatter";
 
 export default function solarSystem(simulation: CanvasSimulation) {
   const { canvas } = simulation;
