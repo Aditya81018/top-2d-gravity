@@ -40,8 +40,8 @@ export function calDistance(bodyA: Body, bodyB: Body) {
 }
 
 export function calAttraction(bodyA: Body, bodyB: Body) {
-  const G = 6.67 * Math.pow(10, -11);
-  const r = calDistance(bodyA, bodyB);
+  const G = 6.67e-11;
+  const r = calDistance(bodyA, bodyB) * bodyA.simulation!.config.metersPerPixel;
   const F = (G * bodyA.mass * bodyB.mass) / Math.pow(r, 2);
   return F;
 }

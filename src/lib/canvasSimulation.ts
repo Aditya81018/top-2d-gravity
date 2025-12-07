@@ -2,6 +2,8 @@
 import Body from "./body";
 import Timer from "./timer";
 
+const SPEED_CONSTANT = 365 * 24 * 60 * 60;
+
 export type CanvasConfig = {
   tailingFade: boolean;
   tailLength: number;
@@ -137,13 +139,10 @@ export default class CanvasSimulation {
     // If you have a timeBoard, you can log here:
     document.getElementById("time")!.innerText = `${
       this.bodies.length
-    } bodies / ${(this.timer.lastTimestamp / 1000).toFixed(0)} sec / ${(
-      ((this.timer.lastTimestamp / 1000) * this.config.speed) /
-      60 /
-      60 /
-      24
-    ).toFixed(0)} days / ${this.timer.fps.toFixed(0)} fps / ${
-      this.config.speed
+    } bodies / ${(this.timer.lastTimestamp / 1000).toFixed(
+      0
+    )} sec / ${this.timer.fps.toFixed(0)} fps / ${
+      this.config.speed / (SPEED_CONSTANT * 1e9 * 4)
     }x`;
   }
 

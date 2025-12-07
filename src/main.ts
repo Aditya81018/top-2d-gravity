@@ -1,19 +1,20 @@
 // main.ts
 import CanvasSimulation, { type CanvasConfig } from "./lib/canvasSimulation";
+import centerMassSimulation from "./lib/simulations/centerMass";
 // import centerMassSimulation from "./lib/simulations/centerMass";
 import randomSpawnSimulation from "./lib/simulations/randomSpawn";
 import scatterSimulation from "./lib/simulations/scatter";
 import "./style.css";
 
-const SPEED_CONSTANT = 365 * 24 * 60 * 60 * (1 / 1000);
+const SPEED_CONSTANT = 365 * 24 * 60 * 60;
 
 const config: CanvasConfig = {
   tailingFade: true,
   tailLength: 10,
-  speed: SPEED_CONSTANT,
+  speed: SPEED_CONSTANT * 1e9 * 4,
   absorb: true,
-  bounded: true,
-  metersPerPixel: 1000,
+  bounded: false,
+  metersPerPixel: 9.461e11,
 };
 
 // DOM elements
@@ -30,25 +31,31 @@ document.addEventListener("keydown", (event) => {
 // Create simulation
 const simulation = new CanvasSimulation(canvas, config);
 
-scatterSimulation(simulation, {
-  count: 50,
-  sizeRange: [4, 8],
-});
-scatterSimulation(simulation, {
-  count: 250,
-  sizeRange: [1, 2],
-});
-
 // scatterSimulation(simulation, {
-//   count: 200,
-//   sizeRange: [0.1, 2],
+//   count: 50,
+//   sizeRange: [1, 2],
 // });
+// scatterSimulation(simulation, {
+//   count: 250,
+//   sizeRange: [0.1, 1],
+// });
+
+scatterSimulation(simulation, {
+  count: 100,
+  sizeRange: [2, 4],
+});
 randomSpawnSimulation(simulation, {
-  interval: 500,
-  sizeRange: [0.1, 4],
-  count: 2,
+  interval: 1000,
+  sizeRange: [0.1, 1],
+  count: 100,
 });
 
-// centerMassSimulation(simulation, { size: 16 });
+randomSpawnSimulation(simulation, {
+  interval: 1000,
+  sizeRange: [2, 4],
+  count: 20,
+});
+
+centerMassSimulation(simulation, { size: 1 });
 
 simulation.start();

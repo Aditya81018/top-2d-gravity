@@ -50,21 +50,23 @@ export default class Body {
 
   update() {
     // 🛑 Check if the body has been absorbed
-    if (!this.isAlive || this.isFixed) {
+    if (!this.isAlive) {
       return;
     }
 
     const dt = this.dtSeconds;
-
     const canvas = this.simulation!.canvas;
+    const config = this.simulation!.config;
+    const metersPerPixel = config.metersPerPixel ?? 1;
 
+    // 🧱 Boundary reflection / removal
     if (
       this.x < this.radius ||
       this.x > canvas.width - this.radius ||
       this.y < this.radius ||
       this.y > canvas.height - this.radius
     ) {
-      if (this.simulation!.config.bounded) {
+      if (config.bounded) {
         // horizontal wall
         if (this.x < this.radius || this.x > canvas.width - this.radius) {
           this.direction = Math.PI - this.direction;
@@ -80,7 +82,8 @@ export default class Body {
       // this.linearSpeed /= 2;
     }
 
-    if (this.simulation!.config.tailingFade) {
+    // 🌟 Tailing / trail
+    if (config.tailingFade) {
       // 👉 store current position in trail BEFORE moving
       this.trail.push({ x: this.x, y: this.y });
       if (this.trail.length > this.maxTrailPoints) {
@@ -88,6 +91,7 @@ export default class Body {
       }
     }
 
+    // 🌌 Gravitational interactions + absorption
     this.simulation!.bodies.forEach((body) => {
       if (body === this) return;
       if (!body.isAlive) return; // Skip bodies already marked for removal
@@ -97,16 +101,11 @@ export default class Body {
 
       // 💥 COLLISION AND ABSORPTION LOGIC START
       if (isColliding) {
-        if (!this.simulation!.config.absorb) return;
+        if (!config.absorb) return;
         // The bigger body (more mass) absorbs the smaller one.
-        // If masses are equal, one can be arbitrarily chosen to absorb the other.
-        if (this.mass >= body.mass) {
+        if ((this.mass >= body.mass && !body.isFixed) || this.isFixed) {
           this.absorbBody(body);
         } else {
-          // The other body is bigger, so this one will be absorbed.
-          // Note: The other body will handle its own absorption in its update loop
-          // or in the next iteration of this loop.
-          // To prevent double-absorption or errors, we set isAlive to false.
           this.isAlive = false;
         }
         return; // Skip gravitational calculation after a collision
@@ -130,8 +129,46 @@ export default class Body {
       }
     });
 
+    // 🌌 COSMIC EXPANSION (Hubble-like outward motion from center)
+    // -------------------------------------------------------------
+    // We approximate the "center of the universe" as the canvas center.
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const dxC = this.x - cx;
+    const dyC = this.y - cy;
+    const rPixels = Math.hypot(dxC, dyC);
+
+    if (rPixels > 0) {
+      // Distance from center in meters
+      const rMeters = rPixels * metersPerPixel;
+
+      // Hubble constant (approx). You can move this into config if you like:
+      //   config.hubbleConstant ?? 2.2e-18
+      const H = 2.2e-18; // [1/s]
+
+      // Radial expansion speed in m/s: v_exp = H * r
+      const vExp_mps = H * rMeters;
+
+      // Convert to pixels per second
+      const vExp_pxps = vExp_mps / metersPerPixel;
+
+      // Displacement this frame due to expansion
+      const dR_pixels = vExp_pxps * dt;
+
+      // Normalized direction from center
+      const nx = dxC / rPixels;
+      const ny = dyC / rPixels;
+
+      // Apply expansion as an extra outward position change
+      this.x += nx * dR_pixels;
+      this.y += ny * dR_pixels;
+    }
+    // -------------------------------------------------------------
+
+    // 🧭 Normal kinematic update (gravity + own velocity)
     // Only update position if still alive (not absorbed in this frame)
-    if (this.isAlive) {
+    if (this.isAlive && !this.isFixed) {
       this.x += this.linearSpeed * Math.cos(this.direction) * dt;
       this.y += this.linearSpeed * Math.sin(this.direction) * dt;
       this.direction += this.angularSpeed * dt;
@@ -164,8 +201,10 @@ export default class Body {
     const newY =
       (this.y * this.mass + absorbedBody.y * absorbedBody.mass) / newMass;
 
-    this.x = newX;
-    this.y = newY;
+    if (!this.isFixed) {
+      this.x = newX;
+      this.y = newY;
+    }
 
     // 4. **Update Velocity (New direction and linearSpeed)**
     const vNewX = pTotalX / newMass;
